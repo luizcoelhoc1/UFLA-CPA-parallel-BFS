@@ -1,4 +1,11 @@
-#include <iostream>
+/* 
+ * File:   Bags.cpp
+ * Author: luizc
+ * 
+ * Created on October 8, 2019, 9:48 PM
+ */
+
+
 #include <math.h>
 using namespace std;
 
@@ -62,7 +69,6 @@ public:
 	typedef Element<Data>* Pennant;
 	Pennant* backbone;
 	int size;
-	
 	
 	Bag(int size) {
 		size = ceil(log2(size));
