@@ -6,28 +6,27 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-	/*
+	
 	Bag<int> b(20);
 	
 	
 	b.insert(5);
-	b.insert(3);
-	b.insert(1);
-	b.insert(8);
-
-	b.insert(114);
-	b.insert(50);
-	b.insert(55);
-	b.insert(6);
 	b.print();
 	
-	cout << b.size;
-	*/
+	Bag<int> x(20);
+
+	x.insert(114);
+	x.insert(50);
+	x.insert(55);
+	x.print();
 	
-	Graph<int> g(5);
+	cout << "apatir daqui";
 	
-	g.addEdge(0,0,66);
-	g.toString();
+	x.bagUnion(b);
 	
+	x.print();
+	
+	
+		 
 	return 0;
 }

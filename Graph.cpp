@@ -1,25 +1,53 @@
 #include <iostream>
 using namespace std;
 
+Template <typename Data>
+class Vertex {
+	Data data;
+	int dist;
+	Vertex (Data data, int dist) {
+		this->data = data;
+		this->dist = dist;
+	}
+	
+	
+}
 
-
-template <typename Data> 
+template <typename Edge> 
 class Graph {
 private:
-	Data*** adjMatrix;
+	Vertex* vertex;
+	Edge*** adjMatrix;
 	int size;
 public:
 	Graph(int size) {
 		this->size = size;
-		adjMatrix = new Data**[size];
+		adjMatrix = new Edge**[size];
 		for (int i = 0; i < size; i++) {
-			adjMatrix[i] = new Data*[size];
+			adjMatrix[i] = new Edge*[size];
 			for (int j = 0; j < size; j++)
 				adjMatrix[i][j] = NULL;
 		}
+		
+		for (int i = 0; i < size; i++) {
+			vertex[i] = NULL;
+		}
+		
+	}
+	
+	bool addVertex(Vertex v) {
+		if (vertex[size-1] != NULL) {
+			return false;
+		}
+		int i = 0;
+		while (vertex[i] != NULL) {
+			i++;
+		}
+		
+		vertex[i] = v;
 	}
  
-	void addEdge(int i, int j, Data value) {
+	void addEdge(int i, int j, Edge value) {
 		adjMatrix[i][j] = &value;
 		adjMatrix[j][i] = &value;
     }
@@ -51,7 +79,7 @@ public:
 		}
 	}
 	
-	Data getEdge(int i, int j) {
+	Edge getEdge(int i, int j) {
 		return *adjMatrix[i][j];
 	}
  

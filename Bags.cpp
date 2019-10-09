@@ -14,46 +14,77 @@ public:
 		this->left = NULL;
 		this->data = data;
 	}
+	
+	Element (Data data, Element* left, Element* right) {
+		this->right = right;
+		this->left = left;
+		this->data = data;
+	}
+	
 	~Element() { 
 		delete left; 
 		delete right; 
 	}
 	
-	void print(const std::string& prefix, bool isLeft, bool first) {
+	Element<Data> copy () {
+		return copy(this);
+	}
+	
+	Element<Data> copy (Element<Data> e) {
+		if (left == NULL && right == NULL) {
+			return new Element<Data>(e->data);
+		}
+		if (left == NULL && right != NULL) {
+			return new Element<Data>(e->data, NULL, copy(e->right));
+		}
+		if (left != NULL && right == NULL) {
+			return new Element<Data>(e->data, copy(e->left), NULL);
+		}
+		if (left != NULL && right != NULL) {
+			return new Element<Data>(e->data, copy(e->left), copy(e->right));
+		}
+	}
+	
+	ostream& print(ostream& os) {
+		return print(os, "", true, true);    
+	}
+	
+	ostream& print(ostream& os, const std::string& prefix, bool isLeft, bool first) {
 		//print prefix
-		cout << prefix;
+		os << prefix;
 		char firstSimbol = 218;
 		char rightSimbol = 192;
 		char leftSimbol = 195;
 		char minus = 196;
 		if (first) {
-			cout << firstSimbol << minus << " ";
+			os << firstSimbol << minus << " ";
 		} else {
 			if (isLeft) {
-				cout << leftSimbol << minus << " ";
+				os << leftSimbol << minus << " ";
 			} else {
-				cout << rightSimbol << minus << " ";
+				os << rightSimbol << minus << " ";
 			}
 		}
 		
 		//print
-        cout << this->data << std::endl;
-
+		os << this->data << std::endl;
+        
 		//print childs
-        if (left != NULL) 
-			left->print( prefix + (isLeft ? "|  " : "   "), right != NULL, false);			
+		if (left != NULL) 
+			left->print(os, prefix + (isLeft ? "|  " : "   "), right != NULL, false);			
 		if (right != NULL)
-			right->print( prefix + (isLeft ? "|  " : "   "), false, false);
-
-	}
-	void print() {
-		print("", true, true);    
+			right->print(os, prefix + (isLeft ? "|  " : "   "), false, false);
+		return os;
 	}
 	
 	
 	
 };
 
+template <typename Data>
+ostream& operator<<(ostream& os, Element<Data>& e){
+	return e.print(os);
+}
 
 
 template <typename Data>
@@ -75,6 +106,13 @@ public:
 	
 	
 	Pennant pennantUnion(Pennant x, Pennant y) {
+		if (x == NULL) {
+			cout << "X nulo mano faz isso n";
+		}
+		
+		if (y == NULL) {
+			cout << "y nulo mano faz isso n";
+		}
 		y->right = x->left;
 		x->left = y;
 		return x;
@@ -88,57 +126,54 @@ public:
 		return y;
 	}
 	
-	Pennant tableDecision(Pennant s1, Pennant s2, Pennant carry) {
+	Pennant tableDecision(int k, Pennant s2, Pennant carry) {
 		if (carry == NULL) {
-			if (s1 == NULL) {
-				s1 = s2;
+			if (this->backbone[k] == NULL && s2 == NULL) {
+				this->backbone[k] = NULL;
 				return NULL;
-			} else if (s2 == NULL) {
-				s1 = s1;
+			}
+			if (this->backbone[k] == NULL && s2 != NULL) {
+				this->backbone[k] = s2;
+				cout << "oiiii";
 				return NULL;
-			} else {
-				s1 = NULL;
-				return pennantUnion(s1, s2);
+			}
+			if (this->backbone[k] != NULL && s2 == NULL) {
+				this->backbone[k] = this->backbone[k];
+				return NULL;
+			}
+			if (this->backbone[k] != NULL && s2 != NULL) {
+				Pennant result = pennantUnion(this->backbone[k],s2);
+				this->backbone[k] = NULL;
+				return result;
 			}
 		} else {
-			/*
-			if (s1 == NULL) {
-				if (s2 == NULL) {
-					s1 = carry;
-					return NULL;
-				} else {
-					return pennantUnion(s2, carry);
-				}
-			} else {
-				if (s2 == NULL) {
-					s1 = NULL;
-					return pennantUnion(s1, carry);
-				} else {
-					return pennantUnion(s2, carry);
-				}
-			}*/
-			if (s1 == NULL && s2 == NULL) {
-				s1 = carry;
+			if (this->backbone[k] == NULL && s2 == NULL) {
+				this->backbone[k] = carry;
 				return NULL;
-			} else if (s1 == NULL && s2 != NULL) {
-				s1 = NULL;
+			} else if (this->backbone[k] == NULL && s2 != NULL) {
+				this->backbone[k] = NULL;
 				return pennantUnion(s2, carry);
-			} else if (s1 != NULL && s2 == NULL) {
-				s1 = NULL;
-				return pennantUnion(s1, carry);
-			} else if (s1 != NULL && s2 != NULL) { 
+			} else if (this->backbone[k] != NULL && s2 == NULL) {
+				Pennant result = pennantUnion(this->backbone[k], carry);
+				this->backbone[k] = NULL;
+				return result;
+			} else if (this->backbone[k] != NULL && s2 != NULL) { 
 				return pennantUnion(s2, carry);
-			} 
+			}
 		}
 	}
 	
-	bool bagUnion (Bag other) {
+	/*
+	 * INUTILIZA A OTHER
+	 * */
+	bool bagUnion (Bag<Data> other) {
 		Pennant y = NULL;
 		for (int k = 0; k < size; k++) {
-			y = tableDecision(this->backbone[k], other->backbone[k], y);			
+				y = tableDecision(k, other.backbone[k], y);
 		}
 		return true;
 	}
+	
 	
 	int count() {
 		int result = 0;
@@ -172,22 +207,37 @@ public:
 		return this->insert(new Element<Data>(x));
 	}
 	
-	void print() {
+	ostream& print(ostream& os) {
 		for (int i = 0; i < this->size; i++) {
-			cout << i << ": " << endl;
+			os << i << ": " << endl;
 			if (this->backbone[i] == NULL) {
-				cout << "nulo";
+				os << "nulo";
 			} else {
-				this->backbone[i]->print();
+				os << *this->backbone[i];
 			}
-			cout << endl << endl;
+			os << endl << endl;
 		}
-	}
-	
-	void print(int index) {
-		this->backbone[index]->print();
+		return os;
 	}
 	
 };
 
+template <typename Data>
+ostream& operator<<(ostream& os, Bag<Data>& bag){
+	return bag.print(os);
+}
+
+/*
+int main(int argc, char **argv) {
+	
+	Bag<int> b(20);
+	
+	b.insert(50);
+	b.insert(34);
+	b.insert(1);
+	
+	cout << b;
+	
+	return 0;
+}*/
 
