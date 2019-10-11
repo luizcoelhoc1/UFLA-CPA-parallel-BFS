@@ -163,6 +163,14 @@ public:
 		}
 	}
 	
+	int pennantSize(int i) {
+		if (backbone[i] == NULL) {
+			return 0;
+		} 
+		return pow(2, i);
+	}
+	
+	
 	/*
 	 * INUTILIZA A OTHER
 	 * */
