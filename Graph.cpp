@@ -39,7 +39,7 @@ public:
 	
 	
 
-	void printMatrix(){
+	void printMatrix() {
 		
 		int cont = 0;
 		for(int i = 1; (unsigned int) i < this->rowPtr.size(); i++){
@@ -60,7 +60,7 @@ public:
 		}
 	}
 	
-	/*
+	
 	double getEdge(int i, int j) {
 
 		int k = rowPtr[i];
@@ -76,7 +76,7 @@ public:
 			return 0;
 		}
 		return val[k];
-	}*/
+	}
 
 	int getDegree(vector<int> rowPtr, int vertex){
 		return rowPtr[vertex] - rowPtr[vertex - 1];
@@ -133,102 +133,15 @@ public:
 		this->rowPtr.push_back(this->colInd.size() + 1);
 		fin.close();
 	}
-
-	void assemble_simetric_csr_matrix(std::string filePath){
-		int M, N, L;
-		vector<int> rows, cols;
-		vector<double> data;
-		
-		std::ifstream fin(filePath.c_str());
-		// Ignore headers and comments:
-		while (fin.peek() == '%') fin.ignore(2048, '\n');
-		// Read defining parameters:
-		fin >> M >> N >> L;	
-		this->rowPtr.push_back(0);
-		for (int l = 0; l < L; l++){
-			int row, col;
-			double d;
-			fin >> row >> col >> d;
-			rows.push_back(row);
-			cols.push_back(col);
-			data.push_back(d);
-		}
-		fin.close();
-		for (int l = 1; l <= M; l++){
-			for (int k = 0; k < L; k++){
-				if (cols[k] == l){
-					this->colInd.push_back(rows[k]);
-					this->val.push_back(data[k]);					
-				}	
-				else if (rows[k] == l){
-					this->colInd.push_back(cols[k]);
-					this->val.push_back(data[k]);				
-				}
-			}
-			this->rowPtr.push_back(this->colInd.size());
-		}
-		
-		this->rowPtr.push_back(this->colInd.size() + 1);
-		
-	}
-
 };
 
-/*
-
-int main(int argc, char* argv[]) {
-	std::string filename = "494_bus.mtx";
-	
-	Csr asym("lpi_galenet.mtx");
-
-	cout << "Tests for asymetric matrix \n";
-	
-	cout << "Matrix bandwidth is " << asym.getBandwidth() << '\n';
-	
-	cout << "Degree of 2: " << asym.getDegree(asym.rowPtr, 2) << '\n';
-	
-	cout << "Adjs to 2: ";
-	
-	asym.printArray(asym.getAdjVertices(asym.colInd, asym.rowPtr, 2));
-	
-	asym.printMatrix();
-	
-	cout << endl;
-	asym.printColInd();
-	asym.printVal();
-	cout << endl;
-	asym.printRowPtr();
-	cout << endl;
-	cout << asym.getEdge(5, 6);
-	return 0;
-	
-}
-
-
-*/
-/*
-#include <iostream>
-using namespace std;
-
-Template <typename Data>
-class Vertex {
-	Data data;
-	int dist;
-	Vertex (Data data, int dist) {
-		this->data = data;
-		this->dist = dist;
-	}
-	
-	
-}
 
 template <typename Edge> 
 class Graph {
-private:
-	Vertex* vertex;
+public:
 	Edge*** adjMatrix;
 	int size;
-public:
+
 	Graph(int size) {
 		this->size = size;
 		adjMatrix = new Edge**[size];
@@ -237,28 +150,56 @@ public:
 			for (int j = 0; j < size; j++)
 				adjMatrix[i][j] = NULL;
 		}
-		
-		for (int i = 0; i < size; i++) {
-			vertex[i] = NULL;
-		}
-		
 	}
 	
-	bool addVertex(Vertex v) {
-		if (vertex[size-1] != NULL) {
-			return false;
-		}
-		int i = 0;
-		while (vertex[i] != NULL) {
-			i++;
+	Graph(std::string filePath) {
+		int M, N;
+		
+		std::ifstream fin(filePath.c_str());
+		while (fin.peek() == '%') fin.ignore(2048, '\n');
+		
+		
+		fin >> M >> N >> size;
+
+		adjMatrix = new Edge**[size];
+		for (int i = 0; i < size; i++) {
+			adjMatrix[i] = new Edge*[size];
+			for (int j = 0; j < size; j++)
+				adjMatrix[i][j] = NULL;
 		}
 		
-		vertex[i] = v;
+		int row, col;
+		Edge d;
+		for (int i = 0; i < size; i++) {
+			fin >> row >> col >> d;
+			adjMatrix[--row][--col] = new Edge(d);
+			
+		}
+		
+		fin.close();
+	}
+	
+	
+	void print () {
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				if (adjMatrix[i][j] == NULL) {
+					cout << 0 << "\t";
+				} else {
+					cout << *adjMatrix[i][j] << "\t";
+				}
+			}
+			cout << endl;
+		}
 	}
  
-	void addEdge(int i, int j, Edge value) {
+	void addEdgeNondirected(int i, int j, Edge value) {
 		adjMatrix[i][j] = &value;
 		adjMatrix[j][i] = &value;
+	}
+	
+ 	void addEdge(int i, int j, Edge value) {
+		adjMatrix[i][j] = &value;
 	}
  
 	void removeEdge(int i, int j) {
@@ -270,27 +211,22 @@ public:
 		return adjMatrix[i][j] != NULL;
 	}
 	
-	void toString() {
-		cout << "  ";
-		for (int i = 0; i < size; i++) {
-			cout << i << "\t";
-		}
-		cout << endl;
-		for (int i = 0; i < size; i++) {
-			cout << i << ": ";
-			for (int j = 0; j < size; j++)
-				if (adjMatrix[i][j] != NULL) {
-					cout << *adjMatrix[i][j] << "\t";
-				} else {
-					cout << "nulo" << "\t";
-				}
-			cout << "\n";
-		}
-	}
+
 	
 	Edge getEdge(int i, int j) {
 		return *adjMatrix[i][j];
 	}
+	
+	vector<int> getAdjVertices(int i) {
+		vector<int> adjVertexs;
+		for (int k = 0; k < size; k++) {
+			if (adjMatrix[i][k] != NULL) {
+				adjVertexs.push_back(k);
+			}
+		}
+		return adjVertexs;
+	}
+	
  
 	~Graph() {
 		for (int i = 0; i < size; i++) {
@@ -300,8 +236,21 @@ public:
 		}
 		delete[] adjMatrix;
 	}
+	
+	
+	
 };
 
 
-
-*/
+/*
+int main(int argc, char **argv) {
+	Graph<double> g("mycielskian3.mtx");
+	
+	vector<int> x = g.getAdjVertices(2);
+	
+	for (int i = 0; (unsigned int)i < x.size(); i++) {
+		cout << x[i] << endl;
+	}
+	
+	return 0;
+}*/

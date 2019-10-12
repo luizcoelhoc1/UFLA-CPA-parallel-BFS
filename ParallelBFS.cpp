@@ -4,11 +4,31 @@
 #include <limits>
 #include <list>
 
+#define GraInSize 10
+
 using namespace std;
 
+typedef int vertex; 
 
-Bag<int> getBag (vector < Bag<int> > v, int i) {
-	vector< Bag<int> >::iterator it = v.begin() + i;
+
+void print(vector<int> v, char keep) {
+	if (v.size() == 0) {
+		cout<< "empty";
+		return;
+	}
+	for (int i = 0; i < (int)v.size(); i++) {
+		cout << i << "- " << v[i] << keep;
+	}
+}
+
+void print(vector<int> v) {
+	print(v, '\n');
+}
+
+
+
+Bag<vertex> getBag (vector < Bag<vertex> > v, int i) {
+	vector< Bag<vertex> >::iterator it = v.begin() + i;
 	return  *it;
 }
 
@@ -18,49 +38,67 @@ int get(vector<int> v, int i) {
 }
 
 
-void eachValueProcess(Csr G, Element<int>* element, vector<int> distances, int distance, Bag<int> outBag) {
-	vector<int> adjVerteces = G.getAdjVertices(G.colInd, G.rowPtr, element->data);
-	for (vector<int>::iterator v = adjVerteces.begin(); v < adjVerteces.end(); v++) {
-		if (get(distances, *v) == numeric_limits<int>::max()) {
-			*v = distance + 1;
-			outBag.insert(*v);
+void eachValueProcess(Graph<double>* G, Element<vertex>* element, Bag<vertex>* outBag, vector<vertex>* distances, int distance) {
+	cout << "process " << *element << endl; 
+	vector<int> adjVerteces = G->getAdjVertices(element->data);
+	cout << "adjVertices of " << element->data << " is: ";
+	print(adjVerteces, ';');
+	cout << endl;
+	for (int v = 0; (unsigned int) v < adjVerteces.size(); v++) {
+		if ((*distances)[adjVerteces[v]] == numeric_limits<int>::max()) {
+			(*distances)[adjVerteces[v]] = distance+1;
+			outBag->insert(adjVerteces[v]);
 		}
 	}
 	
 	if (element->left != NULL) 
-		eachValueProcess(G, element->left, distances, distance, outBag);
+		eachValueProcess(G, element->left, outBag, distances, distance);
 		
 	if (element->right != NULL) 
-		eachValueProcess(G, element->right, distances, distance, outBag);
+		eachValueProcess(G, element->right, outBag, distances, distance);
 }
 
-
-void processPennant(Csr G, Bag<int> inBag, int pennant, Bag<int> outBag, vector<int> distances, int distance) {
-	//inBag.backbone[i] == inPennant         GraInSize????
-	if (inBag.pennantSize(pennant)< 500) {
-		eachValueProcess(G, inBag.backbone[pennant], distances, distance, outBag);
+void processPennant(Graph<double>* G, Bag<vertex> inBag, int inPennant, Bag<vertex>* outBag, vector<int>* distances, int distance) {
+	
+	if (inBag.pennantSize(inPennant) < GraInSize) {
+		
+		eachValueProcess(G, inBag.backbone[inPennant], outBag, distances, distance);
+		
+	} else {
+		cout << "grainsize > pennant size";
 	}
+	
+	/*
+	Element<vertex>* newPennant = inBag.pennantSplit(inBag.backbone[inPennant]);
+	processPennant(G, inBag, inBag.getIndex(newPennant), outBag, distances, distance);
+	processPennant(G, inBag, inPennant, outBag, distances, distance);
+	* 
+	* */
+	
 }
 
 
-void processLayer(Csr G, Bag<int> inBag, Bag<int> outBag, vector<int> distances, int distance) {
-					//size é log ou n????
+void processLayer(Graph<double>* G, Bag<vertex> inBag, Bag<vertex>* outBag, vector<int>* distances, int distance) {
+	//size é log ou n????
+
 	for (int k = 0; k < inBag.size; k++ ) {
+		cout << "process " << k << " pennanat " << endl;
 		if (inBag.backbone[k] != NULL) {
 			processPennant(G, inBag, k, outBag, distances, distance);
+		} else {
+			cout << "k is null" << endl;
 		}
-		
 	}
+	
 }
 
 
 
-vector<int> parallelBFS(Csr G, int v0) {
-	int sizeMaxBag = 500;
+vector<int> parallelBFS(Graph<double> G, int v0) {
 	int distance = 0;
 	vector<int> distances;
 	
-	for(int i = 1; (unsigned int) i < G.rowPtr.size(); i++){
+	for(int i = 0; i < G.size; i++){
 		if (v0 == i) {
 			distances.push_back(0);
 		} else {
@@ -69,17 +107,23 @@ vector<int> parallelBFS(Csr G, int v0) {
 	}
 	
 	vector< Bag<int> > Vd;
-	Bag<int> V0(sizeMaxBag);
+	Bag<int> V0(GraInSize);
 	V0.insert(v0);
 	Vd.push_back(V0);
 	
-	while (getBag(Vd, distance).count() != 0) {
-		Bag<int> vd(sizeMaxBag);
-		Bag<int> vdp1(sizeMaxBag);
-		Vd.push_back(vd);
+	cout << "matriz inicial" << endl;
+	print(distances);
+	cout << endl;
+	while (Vd[distance].count() != 0) {
+		Bag<int> vdp1(GraInSize);
+		cout << "new Distance " << distance << endl;
 		Vd.push_back(vdp1);
-		processLayer(G, vd, vdp1, distances, distance);
+		cout << "start process layer " << distance << endl;
+		processLayer(&G, Vd[distance], &vdp1, &distances, distance);
+		cout << "end process layer" << endl;
+		print(distances);
 		distance++;
+
 	}
 	
 	return distances;
@@ -87,16 +131,15 @@ vector<int> parallelBFS(Csr G, int v0) {
 
 int main(int argc, char **argv) {
 	
-	Csr graph("lpi_galenet.mtx");
 	
-	vector<int> v = parallelBFS(graph, 5);
+	Graph<double> graph("mycielskian3.mtx");
 	
-	int i = 0;
-	for (vector<int>::iterator it = v.begin(); it < v.end(); it++) {
-		cout << i++; 
-		cout << ' ' << *it << endl;
-	}
 	
+	vector<int> v = parallelBFS(graph, 4);
+	
+	cout << v.size(); 
+
+
 	return 0;
 }
 

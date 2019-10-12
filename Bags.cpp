@@ -104,14 +104,13 @@ public:
 		this->size = size;
 	}
 	
-	
 	Pennant pennantUnion(Pennant x, Pennant y) {
 		if (x == NULL) {
-			cout << "X nulo mano faz isso n";
+			cout << "X null";
 		}
 		
 		if (y == NULL) {
-			cout << "y nulo mano faz isso n";
+			cout << "y null";
 		}
 		y->right = x->left;
 		x->left = y;
@@ -169,6 +168,16 @@ public:
 		} 
 		return pow(2, i);
 	}
+	
+	int getIndex (Pennant p) {
+		for (int i = 0; i < size; i++) {
+			if (p == backbone[i]) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	
 	
 	/*
