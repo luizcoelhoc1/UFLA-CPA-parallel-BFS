@@ -93,15 +93,20 @@ public:
 	typedef Element<Data>* Pennant;
 	Pennant* backbone;
 	int size;
+	int descricao;
 	
-	
-	Bag(int size) {
+	Bag(int size, int descricao) {
+		this->descricao = descricao;
 		size = ceil(log2(size));
 		backbone = new Pennant[size];
 		for (int i = 0; i < size; i++) {
 			backbone[i] = NULL;
 		}
 		this->size = size;
+	}
+	
+	~Bag() {
+		cout <<"destruindo bag " << descricao << endl;
 	}
 	
 	Pennant pennantUnion(Pennant x, Pennant y) {

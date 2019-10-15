@@ -7,21 +7,23 @@
 
 using namespace std;
 
+
+template <typename Edge>
 class Csr {
 
 public:
 	Csr(std::string filePath) {
 		assembleCsrMatrix(filePath);
 	}
-	
-	vector<double> val;
-	vector<int>	colInd;
+	//~ vector<Vertex> valVertex;
+	vector<Edge> val;
+	vector<int> colInd;
 	vector<int> rowPtr;
 
 	template <typename Value>
 	void printArray(vector<Value> v){
 		for(int i = 0; (unsigned int) i < v.size(); i++)
-			cout << v[i] << ' ';
+			cout << v[i] << '\t';
 		cout << '\n';
 	}
 	
@@ -38,9 +40,22 @@ public:
 	}
 	
 	
-
+	
+	void printTesteGetEdge() {
+		for (int i = 1; i < 6; i++) {
+			for (int j = 1; j < 6; j++) {
+				cout << this->getEdge(i, j) << "\t";
+			}
+			cout << endl;
+		}
+	}
+	
 	void printMatrix() {
-		
+		printMatrix('\t');
+	}
+
+	
+	void printMatrix(char separator) {
 		int cont = 0;
 		for(int i = 1; (unsigned int) i < this->rowPtr.size(); i++){
 			int row_start = this->rowPtr[i-1] - 1;
@@ -50,9 +65,9 @@ public:
 			vector<int> row(first, last);
 			for(int j = 1; (unsigned int) j < this->rowPtr.size(); j++){
 				if(std::count(row.begin(), row.end(), j) == 0)
-					cout << '0' << '\t';
+					cout << '0' << separator;
 				else{
-					cout << this->val[cont] << '\t';
+					cout << this->val[cont] << separator;
 					cont++;
 				}
 			}
@@ -60,22 +75,19 @@ public:
 		}
 	}
 	
+	void addEdge(int vertexI, int vertexJ) {
+		/*for (int k = rowPtr[i-1]-1; k < rowPtr[i]-1; k++) {
+			if (colInd[k] >  vertexJ) {
+				
+			}
+		}*/
+	}
 	
-	double getEdge(int i, int j) {
-
-		int k = rowPtr[i];
-		cout << "k no inicio " << k << endl;;
-		while (colInd[k] != j) {
-			k++;
-			cout << "col = " << colInd[k] << "; k = " << k << "; val = " << val[k] << endl;
-
-		}
-		cout << "k no final " << k << endl;;
-		cout << colInd[k] << endl;
-		if (colInd[k] != j) {
-			return 0;
-		}
-		return val[k];
+	Edge getEdge(int i, int j) {
+		for (int k = rowPtr[i-1]-1; k < rowPtr[i]-1; k++) 
+			if (colInd[k] == j) 
+				return val[k];
+		return 0;
 	}
 
 	int getDegree(vector<int> rowPtr, int vertex){
@@ -110,25 +122,26 @@ public:
 
 	void assembleCsrMatrix(std::string filePath){
 		int M, N, L;
-		
 		std::ifstream fin(filePath.c_str());
 		// Ignore headers and comments:
 		while (fin.peek() == '%') fin.ignore(2048, '\n');
 		// Read defining parameters:
 		fin >> M >> N >> L;
 		
-		int last_col = 1;
-		this->rowPtr.push_back(0);
+		int lastRow = 1;
+		this->rowPtr.push_back(1);
 		for (int l = 0; l < L; l++){
 			int row, col;
-			double data;
+			Edge data;
 			fin >> row >> col >> data;
-			this->colInd.push_back(row);
+			this->colInd.push_back(col);
 			this->val.push_back(data);
-			if (col > last_col){
-				last_col = col;
-				this->rowPtr.push_back(this->colInd.size() - 1);
-			}	
+			if (row > lastRow){
+				while (row != lastRow) {
+					lastRow++;
+					this->rowPtr.push_back(this->colInd.size());
+				}
+			} 
 		}
 		this->rowPtr.push_back(this->colInd.size() + 1);
 		fin.close();
@@ -229,12 +242,7 @@ public:
 	
  
 	~Graph() {
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++)
-				delete[] adjMatrix[i][j];
-			delete[] adjMatrix[i];
-		}
-		delete[] adjMatrix;
+		cout << "graph destruido";
 	}
 	
 	
@@ -242,15 +250,23 @@ public:
 };
 
 
-/*
+
 int main(int argc, char **argv) {
-	Graph<double> g("mycielskian3.mtx");
+	Csr<double> g("mycielskian3.mtx");
 	
-	vector<int> x = g.getAdjVertices(2);
 	
-	for (int i = 0; (unsigned int)i < x.size(); i++) {
-		cout << x[i] << endl;
-	}
+	g.printColInd();
+	g.printVal();
+	g.printRowPtr();
+	cout << endl;
+	cout << endl;
+	
+	g.printMatrix();
+	cout << endl;
+	cout << endl;
+	cout << endl;
+	g.printTesteGetEdge();
+	
 	
 	return 0;
-}*/
+}

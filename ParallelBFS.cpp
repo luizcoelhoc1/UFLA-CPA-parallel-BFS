@@ -4,6 +4,8 @@
 #include <limits>
 #include <list>
 
+#include <string>  
+
 #define GraInSize 10
 
 using namespace std;
@@ -107,7 +109,7 @@ vector<int> parallelBFS(Graph<double> G, int v0) {
 	}
 	
 	vector< Bag<int> > Vd;
-	Bag<int> V0(GraInSize);
+	Bag<int> V0(GraInSize, 0);
 	V0.insert(v0);
 	Vd.push_back(V0);
 	
@@ -115,7 +117,8 @@ vector<int> parallelBFS(Graph<double> G, int v0) {
 	print(distances);
 	cout << endl;
 	while (Vd[distance].count() != 0) {
-		Bag<int> vdp1(GraInSize);
+		cout << "criacao bag " << distance << endl;
+		Bag<int> vdp1(GraInSize, (distance+1));
 		cout << "new Distance " << distance << endl;
 		Vd.push_back(vdp1);
 		cout << "start process layer " << distance << endl;
@@ -123,22 +126,17 @@ vector<int> parallelBFS(Graph<double> G, int v0) {
 		cout << "end process layer" << endl;
 		print(distances);
 		distance++;
-
 	}
 	
 	return distances;
 }
 
 int main(int argc, char **argv) {
-	
-	
 	Graph<double> graph("mycielskian3.mtx");
 	
+	vector<int> v = parallelBFS(graph, 1);
 	
-	vector<int> v = parallelBFS(graph, 4);
-	
-	cout << v.size(); 
-
+	print(v);
 
 	return 0;
 }
