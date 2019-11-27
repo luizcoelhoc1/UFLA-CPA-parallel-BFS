@@ -4,21 +4,29 @@
 #include <vector>
 #include <math.h> 
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 
 
-template <typename Edge>
-class Csr {
 
+
+
+
+template <typename EdgeType>
+class Csr {
+	
 public:
 	Csr(std::string filePath) {
 		assembleCsrMatrix(filePath);
 	}
 	//~ vector<Vertex> valVertex;
-	vector<Edge> val;
+	vector<EdgeType> val;
 	vector<int> colInd;
 	vector<int> rowPtr;
+	
+	
+	Csr<EdgeType>& operator<<(const Csr<EdgeType>& obj);
 
 	template <typename Value>
 	void printArray(vector<Value> v){
@@ -39,8 +47,6 @@ public:
 		printArray(val);
 	}
 	
-	
-	
 	void printTesteGetEdge() {
 		for (int i = 1; i < 6; i++) {
 			for (int j = 1; j < 6; j++) {
@@ -53,11 +59,10 @@ public:
 	void printMatrix() {
 		printMatrix('\t');
 	}
-
 	
 	void printMatrix(char separator) {
 		int cont = 0;
-		for(int i = 1; (unsigned int) i < this->rowPtr.size(); i++){
+		for(int i = 0; (unsigned int) i < this->rowPtr.size(); i++){
 			int row_start = this->rowPtr[i-1] - 1;
 			int row_end = this->rowPtr[i] - 1;
 			vector<int>::const_iterator first = this->colInd.begin() + row_start;
@@ -75,15 +80,7 @@ public:
 		}
 	}
 	
-	void addEdge(int vertexI, int vertexJ) {
-		/*for (int k = rowPtr[i-1]-1; k < rowPtr[i]-1; k++) {
-			if (colInd[k] >  vertexJ) {
-				
-			}
-		}*/
-	}
-	
-	Edge getEdge(int i, int j) {
+	EdgeType getEdge(int i, int j) {
 		for (int k = rowPtr[i-1]-1; k < rowPtr[i]-1; k++) 
 			if (colInd[k] == j) 
 				return val[k];
@@ -94,13 +91,19 @@ public:
 		return rowPtr[vertex] - rowPtr[vertex - 1];
 	}
 
-	vector<int> getAdjVertices(vector<int> colInd, vector<int> rowPtr, int vertex){
-		int row_start = rowPtr[vertex - 1];
-		int row_end = rowPtr[vertex];
-		vector<int>::const_iterator first = colInd.begin() + row_start;
-		vector<int>::const_iterator last = colInd.begin() + row_end;
-		vector<int> adjVertices(first, last);
+	vector<int> getAdjVertices(int v){
+		vector<int> adjVertices;
+		int row_start = rowPtr[v - 1];
+		int row_end = rowPtr[v];
+		for (int i = row_start; i < row_end; i++) 
+			if (v != colInd[i - 1]) 
+				adjVertices.push_back(colInd[i-1]);
+				
 		return adjVertices;
+	}
+	
+	int size() {
+		return this->rowPtr.size();
 	}
 
 	int getBandwidth(){
@@ -114,7 +117,6 @@ public:
 				if (abs(this->colInd[j] - i) > bandwidth){
 					bandwidth = abs(this->colInd[j] - i);
 				}
-					
 			}
 		}
 		return bandwidth;
@@ -125,28 +127,51 @@ public:
 		std::ifstream fin(filePath.c_str());
 		// Ignore headers and comments:
 		while (fin.peek() == '%') fin.ignore(2048, '\n');
-		// Read defining parameters:
-		fin >> M >> N >> L;
 		
-		int lastRow = 1;
-		this->rowPtr.push_back(1);
-		for (int l = 0; l < L; l++){
+		//define Edge for row, col and value work together
+		struct Edge {
+			int row;
+			int col;
+			EdgeType value;
+		};
+		
+		// Read file and put no vector
+		fin >> M >> N >> L;
+		vector<Edge> v;
+		for (int l = 0; l < L; l++) {
 			int row, col;
-			Edge data;
-			fin >> row >> col >> data;
-			this->colInd.push_back(col);
-			this->val.push_back(data);
-			if (row > lastRow){
-				while (row != lastRow) {
+			EdgeType value;
+			fin >> row >> col >> value;
+			Edge currentRow = {row, col, value};
+			v.push_back(currentRow);
+		}
+		fin.close();
+		
+		//sort by row
+		std::sort(v.begin(), v.end(),  
+			[](const Edge &a, const Edge &b){
+				return a.row < b.row; 
+			}
+		);
+		
+		//assimile
+		int lastRow = 0;
+		this->rowPtr.push_back(1);
+		for (auto &edge : v) {
+			this->colInd.push_back(edge.col);
+			this->val.push_back(edge.value);
+			if (edge.row > lastRow) { //if change row
+				while (edge.row != lastRow) { //skip until new row
 					lastRow++;
 					this->rowPtr.push_back(this->colInd.size());
 				}
 			} 
 		}
 		this->rowPtr.push_back(this->colInd.size() + 1);
-		fin.close();
 	}
 };
+
+
 
 
 template <typename Edge> 
@@ -250,23 +275,15 @@ public:
 };
 
 
-
 int main(int argc, char **argv) {
-	Csr<double> g("mycielskian3.mtx");
+
+
+	Csr<edge> g("mycielskian3.mtx");
 	
-	
-	g.printColInd();
-	g.printVal();
-	g.printRowPtr();
-	cout << endl;
-	cout << endl;
-	
-	g.printMatrix();
-	cout << endl;
-	cout << endl;
-	cout << endl;
-	g.printTesteGetEdge();
-	
+	vector<int> v = BFS(g, 2);
+
+	cout << endl << endl << "result:" << endl;
+	print(v);
 	
 	return 0;
 }

@@ -1,16 +1,18 @@
 #include <iostream>
 #include "Bags.cpp"
-#include "Graph.cpp"
+#include "Csr.cpp"
 #include <limits>
 #include <list>
+#include <string>
 
-#include <string>  
 
 #define GraInSize 10
+#define infinit numeric_limits<int>::max()
 
 using namespace std;
 
-typedef int vertex; 
+typedef int vertex;
+typedef double edge;
 
 
 void print(vector<int> v, char keep) {
@@ -28,7 +30,7 @@ void print(vector<int> v) {
 }
 
 
-
+/*
 Bag<vertex> getBag (vector < Bag<vertex> > v, int i) {
 	vector< Bag<vertex> >::iterator it = v.begin() + i;
 	return  *it;
@@ -38,106 +40,82 @@ int get(vector<int> v, int i) {
 	vector<int>::iterator it = v.begin() + i;
 	return *it;
 }
+*/
 
 
-void eachValueProcess(Graph<double>* G, Element<vertex>* element, Bag<vertex>* outBag, vector<vertex>* distances, int distance) {
-	cout << "process " << *element << endl; 
+void eachValueProcess(Csr<edge>* G, Element<vertex>* element, Bag<vertex>* outBag, vector<vertex>* distances, int distance) {
+	std::cout << element->data << '\n';
 	vector<int> adjVerteces = G->getAdjVertices(element->data);
-	cout << "adjVertices of " << element->data << " is: ";
-	print(adjVerteces, ';');
-	cout << endl;
+
 	for (int v = 0; (unsigned int) v < adjVerteces.size(); v++) {
-		if ((*distances)[adjVerteces[v]] == numeric_limits<int>::max()) {
+		if ((*distances)[adjVerteces[v]] == infinit) {
 			(*distances)[adjVerteces[v]] = distance+1;
 			outBag->insert(adjVerteces[v]);
 		}
 	}
-	
-	if (element->left != NULL) 
+
+	if (element->left != NULL)
 		eachValueProcess(G, element->left, outBag, distances, distance);
-		
-	if (element->right != NULL) 
+
+	if (element->right != NULL)
 		eachValueProcess(G, element->right, outBag, distances, distance);
 }
 
-void processPennant(Graph<double>* G, Bag<vertex> inBag, int inPennant, Bag<vertex>* outBag, vector<int>* distances, int distance) {
-	
+void processPennant(Csr<edge>* G, Bag<vertex> inBag, int inPennant, Bag<vertex>* outBag, vector<int>* distances, int distance) {
 	if (inBag.pennantSize(inPennant) < GraInSize) {
-		
 		eachValueProcess(G, inBag.backbone[inPennant], outBag, distances, distance);
-		
-	} else {
-		cout << "grainsize > pennant size";
 	}
-	
+
 	/*
 	Element<vertex>* newPennant = inBag.pennantSplit(inBag.backbone[inPennant]);
 	processPennant(G, inBag, inBag.getIndex(newPennant), outBag, distances, distance);
 	processPennant(G, inBag, inPennant, outBag, distances, distance);
-	* 
+	*
 	* */
-	
+
 }
 
-
-void processLayer(Graph<double>* G, Bag<vertex> inBag, Bag<vertex>* outBag, vector<int>* distances, int distance) {
-	//size é log ou n????
-
-	for (int k = 0; k < inBag.size; k++ ) {
-		cout << "process " << k << " pennanat " << endl;
+void processLayer(Csr<edge>* G, Bag<vertex> inBag, Bag<vertex>* outBag, vector<int>* distances, int distance) {
+	#pragma omp parallel for
+	for (int k = 0; k < inBag.getSize(); k++ ) {
+		std::cout << k << '\n';
 		if (inBag.backbone[k] != NULL) {
 			processPennant(G, inBag, k, outBag, distances, distance);
-		} else {
-			cout << "k is null" << endl;
 		}
 	}
-	
+
 }
 
-
-
-vector<int> parallelBFS(Graph<double> G, int v0) {
+vector<int> parallelBFS(Csr<edge> G, int v0) {
 	int distance = 0;
 	vector<int> distances;
-	
-	for(int i = 0; i < G.size; i++){
-		if (v0 == i) {
-			distances.push_back(0);
-		} else {
-			distances.push_back(numeric_limits<int>::max());
-		}
+
+	for(int i = 0; i < G.size(); i++){
+		distances.push_back(infinit);
 	}
-	
+	distances[v0] = 0;
+
 	vector< Bag<int> > Vd;
-	Bag<int> V0(GraInSize, 0);
+	Bag<int> V0(GraInSize);
 	V0.insert(v0);
 	Vd.push_back(V0);
-	
-	cout << "matriz inicial" << endl;
-	print(distances);
-	cout << endl;
+
 	while (Vd[distance].count() != 0) {
-		cout << "criacao bag " << distance << endl;
-		Bag<int> vdp1(GraInSize, (distance+1));
-		cout << "new Distance " << distance << endl;
+		Bag<int> vdp1(GraInSize);
 		Vd.push_back(vdp1);
-		cout << "start process layer " << distance << endl;
 		processLayer(&G, Vd[distance], &vdp1, &distances, distance);
-		cout << "end process layer" << endl;
-		print(distances);
 		distance++;
 	}
-	
+
 	return distances;
 }
 
+
 int main(int argc, char **argv) {
-	Graph<double> graph("mycielskian3.mtx");
-	
-	vector<int> v = parallelBFS(graph, 1);
-	
+	Csr<edge> graph("mtx/mycielskian3.mtx");
+
+	vector<int> v = parallelBFS(graph, 2);
 	print(v);
 
 	return 0;
 }
-

@@ -71,14 +71,11 @@ public:
         
 		//print childs
 		if (left != NULL) 
-			left->print(os, prefix + (isLeft ? "|  " : "   "), right != NULL, false);			
+			left->print(os, prefix + (isLeft ? "|  " : "   "), right != NULL, false);
 		if (right != NULL)
 			right->print(os, prefix + (isLeft ? "|  " : "   "), false, false);
 		return os;
 	}
-	
-	
-	
 };
 
 template <typename Data>
@@ -89,14 +86,13 @@ ostream& operator<<(ostream& os, Element<Data>& e){
 
 template <typename Data>
 class Bag {
+private: 
+	int size;
 public:
 	typedef Element<Data>* Pennant;
 	Pennant* backbone;
-	int size;
-	int descricao;
 	
-	Bag(int size, int descricao) {
-		this->descricao = descricao;
+	Bag(int size) {
 		size = ceil(log2(size));
 		backbone = new Pennant[size];
 		for (int i = 0; i < size; i++) {
@@ -106,7 +102,10 @@ public:
 	}
 	
 	~Bag() {
-		cout <<"destruindo bag " << descricao << endl;
+	}
+	
+	int getSize () {
+		return size;
 	}
 	
 	Pennant pennantUnion(Pennant x, Pennant y) {
@@ -138,7 +137,6 @@ public:
 			}
 			if (this->backbone[k] == NULL && s2 != NULL) {
 				this->backbone[k] = s2;
-				cout << "oiiii";
 				return NULL;
 			}
 			if (this->backbone[k] != NULL && s2 == NULL) {
