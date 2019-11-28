@@ -6,7 +6,7 @@
 #include <string>
 #include "print.cpp"
 
-#define GraInSize 10
+#define GraInSize 128
 #define infinit numeric_limits<int>::max()
 
 using namespace std;
