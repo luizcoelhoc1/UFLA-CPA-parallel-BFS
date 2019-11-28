@@ -4,7 +4,7 @@
 #include <limits>
 #include <list>
 #include <string>
-
+#include "print.cpp"
 
 #define GraInSize 10
 #define infinit numeric_limits<int>::max()
@@ -14,33 +14,6 @@ using namespace std;
 typedef int vertex;
 typedef double edge;
 
-
-void print(vector<int> v, char keep) {
-	if (v.size() == 0) {
-		cout<< "empty";
-		return;
-	}
-	for (int i = 0; i < (int)v.size(); i++) {
-		cout << i << "- " << v[i] << keep;
-	}
-}
-
-void print(vector<int> v) {
-	print(v, '\n');
-}
-
-
-/*
-Bag<vertex> getBag (vector < Bag<vertex> > v, int i) {
-	vector< Bag<vertex> >::iterator it = v.begin() + i;
-	return  *it;
-}
-
-int get(vector<int> v, int i) {
-	vector<int>::iterator it = v.begin() + i;
-	return *it;
-}
-*/
 
 
 void eachValueProcess(Csr<edge>* G, Element<vertex>* element, Bag<vertex>* outBag, vector<vertex>* distances, int distance) {
@@ -61,26 +34,22 @@ void eachValueProcess(Csr<edge>* G, Element<vertex>* element, Bag<vertex>* outBa
 		eachValueProcess(G, element->right, outBag, distances, distance);
 }
 
-void processPennant(Csr<edge>* G, Bag<vertex> inBag, int inPennant, Bag<vertex>* outBag, vector<int>* distances, int distance) {
-	if (inBag.pennantSize(inPennant) < GraInSize) {
-		eachValueProcess(G, inBag.backbone[inPennant], outBag, distances, distance);
+void processPennant(Csr<edge>* G, Bag<vertex> inBag, Element<vertex>* inPennant, int sizePennant, Bag<vertex>* outBag, vector<int>* distances, int distance) {
+	if (sizePennant < GraInSize) {
+		eachValueProcess(G, inPennant, outBag, distances, distance);
+		return;
 	}
-
-	/*
-	Element<vertex>* newPennant = inBag.pennantSplit(inBag.backbone[inPennant]);
-	processPennant(G, inBag, inBag.getIndex(newPennant), outBag, distances, distance);
-	processPennant(G, inBag, inPennant, outBag, distances, distance);
-	*
-	* */
-
+	
+	Element<vertex>* newPennant = inBag.pennantSplit(inPennant);
+	processPennant(G, inBag, newPennant, sizePennant >> 1, outBag, distances, distance);
+	processPennant(G, inBag, inPennant, sizePennant >> 1, outBag, distances, distance);
 }
 
 void processLayer(Csr<edge>* G, Bag<vertex> inBag, Bag<vertex>* outBag, vector<int>* distances, int distance) {
 	#pragma omp parallel for
 	for (int k = 0; k < inBag.getSize(); k++ ) {
-		std::cout << k << '\n';
 		if (inBag.backbone[k] != NULL) {
-			processPennant(G, inBag, k, outBag, distances, distance);
+			processPennant(G, inBag, inBag.backbone[k], inBag.pennantSize(k), outBag, distances, distance);
 		}
 	}
 
@@ -112,6 +81,7 @@ vector<int> parallelBFS(Csr<edge> G, int v0) {
 
 
 int main(int argc, char **argv) {
+	
 	Csr<edge> graph("mtx/mycielskian3.mtx");
 
 	vector<int> v = parallelBFS(graph, 2);
