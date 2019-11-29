@@ -5,6 +5,9 @@
 #include <list>
 #include <string>
 #include "print.cpp"
+#include <chrono>
+#include <ctime>    
+
 
 #define GraInSize 128
 #define infinit numeric_limits<int>::max()
@@ -17,7 +20,6 @@ typedef double edge;
 
 
 void eachValueProcess(Csr<edge>* G, Element<vertex>* element, Bag<vertex>* outBag, vector<vertex>* distances, int distance) {
-	std::cout << element->data << '\n';
 	vector<int> adjVerteces = G->getAdjVertices(element->data);
 
 	for (int v = 0; (unsigned int) v < adjVerteces.size(); v++) {
@@ -59,7 +61,7 @@ vector<int> parallelBFS(Csr<edge> G, int v0) {
 	int distance = 0;
 	vector<int> distances;
 
-	for(int i = 0; i < G.size(); i++){
+	for(int i = 0; i < G.getSize(); i++){
 		distances.push_back(infinit);
 	}
 	distances[v0] = 0;
@@ -82,10 +84,13 @@ vector<int> parallelBFS(Csr<edge> G, int v0) {
 
 int main(int argc, char **argv) {
 	
-	Csr<edge> graph("mtx/mycielskian3.mtx");
-
+	Csr<edge> graph("mtx/cage14.mtx");
+	auto start = std::chrono::system_clock::now();
 	vector<int> v = parallelBFS(graph, 2);
-	print(v);
+	auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
 
+    std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
+    
 	return 0;
 }

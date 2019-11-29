@@ -1,6 +1,0 @@
-i = 2
-j = 1
-k = ??
-val(k) = 7
-colInd(K) = 1
-row(2) <= k < 3

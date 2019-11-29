@@ -4,6 +4,9 @@
 #include <vector>
 #include <math.h> 
 #include <limits>
+#include <chrono>
+#include <ctime>    
+
 
 using namespace std;
 
@@ -66,10 +69,6 @@ public:
 		return 0;
 	}
 	
-	int getDegree(vector<int> rowPtr, int v){
-		return rowPtr[v + 1] - rowPtr[v];
-	}
-	
 	vector<int> getAdjVertices(int v){
 		return getAdjVertices(v, false);
 	}
@@ -89,7 +88,7 @@ public:
 		return adjVertices;
 	}
 	
-	int size() {
+	int getSize() {
 		return this->rowPtr.size();
 	}
 
@@ -112,8 +111,16 @@ public:
 	void assembleCsrMatrix(std::string filePath){
 		int M, N, L;
 		std::ifstream fin(filePath.c_str());
+		
+
+		auto start = std::chrono::system_clock::now();
 		// Ignore headers and comments:
 		while (fin.peek() == '%') fin.ignore(2048, '\n');
+		// finish
+		auto end = std::chrono::system_clock::now();
+		std::chrono::duration<double> seconds = end - start;
+		std::cout << "time to ignore \\n: " << seconds.count() << "s\n";
+		
 		
 		//define Edge for row, col and value work together
 		struct Edge {
@@ -122,6 +129,7 @@ public:
 			EdgeType value;
 		};
 		
+		start = std::chrono::system_clock::now();
 		// Read file and put no vector
 		fin >> M >> N >> L;
 		vector<Edge> v;
@@ -133,7 +141,13 @@ public:
 			v.push_back(currentRow);
 		}
 		fin.close();
+		//finishi
+		end = std::chrono::system_clock::now();
+		seconds = end - start;
+		std::cout << "time to read file: " << seconds.count() << "s\n";
 		
+		
+		start = std::chrono::system_clock::now();
 		//sort by row
 		std::sort(v.begin(), v.end(),  
 			[](const Edge &a, const Edge &b){
@@ -141,6 +155,11 @@ public:
 			}
 		);
 		
+		end = std::chrono::system_clock::now();
+		seconds = end - start;
+		std::cout << "time to sort rows: " << seconds.count() << "s\n";
+		
+		start = std::chrono::system_clock::now();
 		//assimile
 		int lastRow = 0;
 		this->rowPtr.push_back(0);
@@ -155,6 +174,10 @@ public:
 			} 
 		}
 		this->rowPtr.push_back(this->colInd.size());
+		end = std::chrono::system_clock::now();
+		seconds = end - start;
+		std::cout << "time to assimile: " << seconds.count() << "s\n";
+		
 	}
 };
 
