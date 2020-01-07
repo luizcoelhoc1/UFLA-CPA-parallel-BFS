@@ -32,14 +32,9 @@ void eachValueProcess(Csr<edge>* G, Element<vertex>* element, Bag<vertex>* outBa
 }
 
 void processPennant(Csr<edge>* G, Bag<vertex> inBag, Element<vertex>* inPennant, int sizePennant, Bag<vertex>* outBag, vector<int>* distances, int distance) {
-	if (sizePennant < GraInSize) {
 		eachValueProcess(G, inPennant, outBag, distances, distance);
 		return;
-	}
-	
-	Element<vertex>* newPennant = inBag.pennantSplit(inPennant);
-	processPennant(G, inBag, newPennant, sizePennant >> 1, outBag, distances, distance);
-	processPennant(G, inBag, inPennant, sizePennant >> 1, outBag, distances, distance);
+
 }
 
 void processLayer(Csr<edge>* G, Bag<vertex> inBag, Bag<vertex>* outBag, vector<int>* distances, int distance) {
